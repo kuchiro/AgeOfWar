@@ -175,6 +175,9 @@ MonoBehaviour:
   maxhealth: 100
   attackDamage: 10
   goldGive: 10
+  runSheet: {fileID: 2800000, guid: 552146dbb8bac6f449493bca4b69540f, type: 3}
+  idleSheet: {fileID: 2800000, guid: 40de9a8703e2e5a47882b0b86451c741, type: 3}
+  spriteHeight: 2
   unitTeam: 0
   baseP: {fileID: 3008763104373503956, guid: 8dcf3e85d84a14d388a054893f1d1d6f, type: 3}
   targetBase: {fileID: 8497443836491930214, guid: fc4c7de2a726e4f17a61449561b7f0a3, type: 3}

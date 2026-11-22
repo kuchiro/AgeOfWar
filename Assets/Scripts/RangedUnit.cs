@@ -1,60 +1,72 @@
-using System.Collections;
-using System.Collections.Generic;
-
 using UnityEngine;
 
+/// <summary>
+/// Unité à distance : s'arrête dès qu'un ennemi (ou la base adverse) est à portée et tire,
+/// sinon avance en restant dans la file derrière ses alliés.
+/// </summary>
 public class RangedUnit : Unit
 {
     [Header("Ranged Attack")]
     public GameObject projectilePrefab;
     public Transform firePoint;
 
-    // cadence de tir de l'unité à distance
+    // cadence de tir de l'unité à distance (tirs par seconde)
     public float fireRate = 1f;
 
     // portée de l'attaque
     public float attackRange = 5f;
 
-    private float fireTimer = 0f;
-
-    protected override void Start()
+    protected override void Think()
     {
-        base.Start();
-    }
+        float cooldown = 1f / Mathf.Max(0.01f, fireRate);
 
-    private void Update()
-    {
-        fireTimer += Time.deltaTime;
-
-        // chercher la cible ennemie la plus proche (unité adverse)
-        Unit target = FindNearestEnemy();
-
-        // S'il y a une unité ennemie proche -> attaquer
-        if (target != null )
+        // 1) une unité ennemie à portée → on tire
+        Unit target = ClosestEnemyAhead(out float gap);
+        if (target != null && gap + 2f * BodyHalfWidth <= attackRange)
         {
-            float distance = Vector2.Distance(transform.position, target.transform.position);
-            if (distance > attackRange)
-                MoveTowardsBase();
-            else if (fireTimer >= 1f / fireRate)
+            anim.SetMoving(false);
+            if (attackTimer >= cooldown)
             {
-                FireProjectile(target);
-                fireTimer = 0f;
+                attackTimer = 0f;
+                FireProjectile(target.AimPoint);
             }
+            return;
         }
-        else
+
+        // 2) la base adverse à portée → on la bombarde
+        float baseGap = BaseGap();
+        if (baseGap <= attackRange * 0.6f)
         {
-            // Si aucun ennemi proche, on avance vers la base ennemie
-            MoveTowardsBase();
+            anim.SetMoving(false);
+            if (attackTimer >= cooldown)
+            {
+                attackTimer = 0f;
+                Bounds b = enemyBaseCollider.bounds;
+                float front = facing > 0 ? b.min.x + 0.4f : b.max.x - 0.4f;
+                FireProjectile(new Vector3(front, AimPoint.y, 0f));
+            }
+            return;
         }
+
+        // 3) sinon on avance (en respectant la file)
+        if (IsBlockedByAlly()) { anim.SetMoving(false); return; }
+        MoveTowardsBase();
     }
 
     // gestion du projectile de l'unité qui tire
-    private void FireProjectile(Unit target)
+    private void FireProjectile(Vector3 aim)
     {
         if (projectilePrefab == null) return;
 
-        Vector3 dir = (target.transform.position - transform.position).normalized;
-        Vector3 spawnPos = firePoint != null ? firePoint.position : transform.position + dir * 0.5f;
+        Vector3 spawnPos = firePoint != null
+            ? firePoint.position
+            : transform.position + new Vector3(facing * 0.45f, spriteHeight * 0.4f, 0f);
+        Vector3 dir = aim - spawnPos;
+        dir.z = 0f;
+        if (dir.sqrMagnitude < 0.0001f) dir = Vector3.right * facing;
+        dir.Normalize();
+
+        anim.Attack();
 
         GameObject proj = Instantiate(projectilePrefab, spawnPos, Quaternion.identity);
         proj.transform.right = dir;
@@ -65,28 +77,7 @@ public class RangedUnit : Unit
             p.damage = attackDamage;
             p.team = unitTeam;
             p.shooter = this;
+            p.rewardBase = baseP;
         }
-    }
-
-    // on cherche la cible ennemie la plus proche
-    private Unit FindNearestEnemy()
-    {
-        Unit[] allUnits = FindObjectsOfType<Unit>();
-        Unit nearest = null;
-        float minDist = Mathf.Infinity;
-
-        foreach (Unit u in allUnits)
-        {
-            if (u == this || u.unitTeam == this.unitTeam) continue;
-
-            float dist = Vector2.Distance(transform.position, u.transform.position);
-            if (dist < minDist && dist <= attackRange)
-            {
-                minDist = dist;
-                nearest = u;
-            }
-        }
-
-        return nearest;
     }
 }

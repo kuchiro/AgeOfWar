@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
@@ -8,8 +6,7 @@ public class UIManager : MonoBehaviour
 {
     public Button meleeButton;
     public Button rangedButton;
-    
-    //public Button spawnButton;
+
     public Spawner playerSpawner;
 
     public TextMeshProUGUI goldText;
@@ -18,46 +15,45 @@ public class UIManager : MonoBehaviour
     public GameObject meleePrefab;
     public GameObject rangedPrefab;
 
+    [Header("Coûts")]
+    public int meleeCost = 20;
+    public int rangedCost = 15;
 
-    // Start is called before the first frame update
+    private TextMeshProUGUI meleeLabel, rangedLabel;
+
     void Start()
     {
-    
-        meleeButton.onClick.AddListener(() => OnSpawnButtonClicked(meleePrefab, 20));
-        rangedButton.onClick.AddListener(() => OnSpawnButtonClicked(rangedPrefab, 15));
-        
+        meleeButton.onClick.AddListener(() => OnSpawnButtonClicked(meleePrefab, meleeCost));
+        rangedButton.onClick.AddListener(() => OnSpawnButtonClicked(rangedPrefab, rangedCost));
+
+        meleeLabel = meleeButton.GetComponentInChildren<TextMeshProUGUI>(true);
+        rangedLabel = rangedButton.GetComponentInChildren<TextMeshProUGUI>(true);
+        if (meleeLabel != null) meleeLabel.text = ButtonText("GUERRIER", meleeCost);
+        if (rangedLabel != null) rangedLabel.text = ButtonText("TIREUR", rangedCost);
     }
 
-    /*void OnSpawnButtonClicked()
+    static string ButtonText(string name, int cost) =>
+        name + "\n<size=75%><color=#F2C94C>" + cost + " or</color></size>";
+
+    void OnSpawnButtonClicked(GameObject prefab, int unitCost)
     {
-        int unitCost = 20;
-
-        if (playerBase.goldPocket >= unitCost)
-        {
-            playerBase.goldPocket -= unitCost;   // on retire le coût
-            playerSpawner.SpawnUnit();           // on fait apparaître l’unité
-        }
-    }*/
-
-     void OnSpawnButtonClicked(GameObject prefab, int unitCost)
-    {
-        //int unitCost = 20;
-
-        if (playerBase.goldPocket >= unitCost)
+        if (playerBase != null && playerBase.goldPocket >= unitCost)
         {
             playerBase.goldPocket -= unitCost;   // on retire le coût
             playerSpawner.unitPrefab = prefab;
-            playerSpawner.SpawnUnit();           // on fait apparaître l’unité
+            playerSpawner.SpawnUnit();           // on fait apparaître l'unité
         }
     }
-    
-    // Update is called once per frame
+
     void Update()
     {
-        if (playerBase != null && goldText != null)
-        {
-            //Debug.Log("Updating gold display: " + playerBase.team);
-            goldText.text = "Gold: " + playerBase.goldPocket.ToString();
-        }
+        if (playerBase == null) return;
+
+        int gold = playerBase.goldPocket;
+        if (goldText != null) goldText.text = "OR  " + gold;
+
+        // boutons grisés quand on n'a pas de quoi payer
+        meleeButton.interactable = gold >= meleeCost;
+        rangedButton.interactable = gold >= rangedCost;
     }
 }
