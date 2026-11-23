@@ -6,6 +6,8 @@ soldats qui avancent vers la base adverse, et le premier château détruit perd 
 
 Projet réalisé dans le cadre du cours *Méthodologie et Langages Avancés* (Master 2).
 
+### ▶ [Jouer en ligne : uspnaow.netlify.app](https://uspnaow.netlify.app)
+
 ---
 
 ## Sommaire
@@ -85,6 +87,7 @@ Chaque unité et chaque château a une **barre de vie** (verte pour ton camp, ro
    indique à l'hébergeur (Netlify) les bons en-têtes `Content-Encoding` ; il doit être
    présent dans le dossier publié, sinon le jeu ne se charge pas.
 5. Déployer : glisser le dossier `buildWeb` dans l'onglet **Deploys** du site Netlify.
+   La version en ligne est accessible sur <https://uspnaow.netlify.app>.
 
 Les dossiers de build (`build/`, `buildWeb/`, `buildAndroid/`) sont ignorés par Git.
 
